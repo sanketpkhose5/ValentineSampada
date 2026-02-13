@@ -191,27 +191,46 @@ export default function App() {
   const audioRef = useRef(null);
 
   useEffect(() => {
+    // Set volume immediately
+    if (audioRef.current) {
+      audioRef.current.volume = 0.3;
+    }
+
     // Try to play audio when component mounts
     const playAudio = async () => {
       try {
-        audioRef.current.volume = 0.3;
-        await audioRef.current.play();
+        if (audioRef.current) {
+          await audioRef.current.play();
+          console.log("Audio playing automatically");
+        }
       } catch (err) {
         console.log("Autoplay blocked, waiting for user interaction");
-        // If autoplay fails, play on first user interaction
-        const playOnInteraction = () => {
-          audioRef.current?.play();
-          document.removeEventListener("click", playOnInteraction);
-          document.removeEventListener("touchstart", playOnInteraction);
-        };
-        document.addEventListener("click", playOnInteraction);
-        document.addEventListener("touchstart", playOnInteraction);
       }
     };
     
-    // Delay slightly to ensure audio element is ready
+    // Delay to ensure audio element is ready
     const timer = setTimeout(playAudio, 500);
-    return () => clearTimeout(timer);
+
+    // Add click/touch listeners for mobile - play on any interaction
+    const playOnInteraction = async () => {
+      try {
+        if (audioRef.current && audioRef.current.paused) {
+          await audioRef.current.play();
+          console.log("Audio started on user interaction");
+        }
+      } catch (err) {
+        console.log("Could not play audio:", err);
+      }
+    };
+
+    document.addEventListener("click", playOnInteraction);
+    document.addEventListener("touchstart", playOnInteraction);
+
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener("click", playOnInteraction);
+      document.removeEventListener("touchstart", playOnInteraction);
+    };
   }, []);
 
   return (
@@ -221,7 +240,7 @@ export default function App() {
       overflow: "hidden",
       position: "relative"
     }}>
-      <audio ref={audioRef} loop>
+      <audio ref={audioRef} loop preload="auto">
         <source src="/music/ringtone.mp3" type="audio/mpeg" />
       </audio>
 
