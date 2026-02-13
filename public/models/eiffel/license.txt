@@ -1,0 +1,11 @@
+Model Information:
+* title:	LOW_POLY_EIFFEL_TOWER
+* source:	https://sketchfab.com/3d-models/low-poly-eiffel-tower-9aef63523ee34d718522e9f012661589
+* author:	Benedico2001 (https://sketchfab.com/Benedico2001)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "LOW_POLY_EIFFEL_TOWER" (https://sketchfab.com/3d-models/low-poly-eiffel-tower-9aef63523ee34d718522e9f012661589) by Benedico2001 (https://sketchfab.com/Benedico2001) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
