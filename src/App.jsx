@@ -3,6 +3,8 @@ import { ScrollControls, useScroll, Environment, useGLTF, Sky } from "@react-thr
 import { EffectComposer, DepthOfField, Bloom } from "@react-three/postprocessing";
 import { useRef, useState } from "react";
 import { useEffect, Suspense } from "react";
+import { OrbitControls } from "@react-three/drei";
+
 import * as THREE from "three";
 
 function Scooter({ scooterRef }) {
@@ -31,16 +33,25 @@ function EiffelTower() {
 
 function Eiffel() {
   const { scene } = useGLTF("/models/eiffel/scene.gltf");
+  const baseY = 0;
 
   useEffect(() => {
     if (scene) {
       scene.scale.set(8, 8, 8);
-      scene.position.set(0, 0, -180);
+      scene.position.set(0, baseY, -180);
     }
   }, [scene]);
 
+  useFrame(({ clock }) => {
+    if (scene) {
+      scene.position.y =
+        baseY + Math.sin(clock.getElapsedTime()) * 0.5;
+    }
+  });
+
   return <primitive object={scene} />;
 }
+
 
 function HeroUI() {
   return (
@@ -66,16 +77,13 @@ function HeroUI() {
 }
 
 function Scene({ checkpoint }) {
-  const scooterRef = useRef();
-  const groupRef = useRef();
   const scroll = useScroll();
 
   useFrame(({ camera }) => {
     const progress = scroll.offset;
 
-    // Scroll lock logic
+    // Lock scroll at checkpoints
     let maxScroll = 1;
-
     if (checkpoint === 0) maxScroll = 0.35;
     if (checkpoint === 1) maxScroll = 0.6;
     if (checkpoint === 2) maxScroll = 0.85;
@@ -84,9 +92,8 @@ function Scene({ checkpoint }) {
       scroll.el.scrollTop = maxScroll * scroll.el.scrollHeight;
     }
 
-    // -------- BEFORE FINAL --------
+    // 🎬 Cinematic scroll camera BEFORE final
     if (checkpoint < 3) {
-
       const targetZ = -progress * 180;
       const targetY = 50 - progress * 3;
 
@@ -98,30 +105,19 @@ function Scene({ checkpoint }) {
       camera.lookAt(0, 5, -160);
     }
 
-    // -------- FINAL LOCKED CAMERA --------
-    else {
-
-      // Fixed cinematic high angle
-      camera.position.lerp(
-        new THREE.Vector3(0, 50, -60),
-        0.04
-      );
-
-      camera.lookAt(0, 8, -180);
-    }
+    // 🚫 DO NOT CONTROL CAMERA at checkpoint 3
   });
 
-
   return (
-    <group ref={groupRef}>
+    <group>
       <fog attach="fog" args={["#ffe6d6", 150, 600]} />
 
-      <ambientLight intensity={0.5} />
+      <ambientLight intensity={0.7} color="#ffd1b3" />
 
       <directionalLight
-        position={[30, 50, 20]}
-        intensity={2.2}
-        color="#ffb38a"
+        position={[100, 100, 50]}
+        intensity={3}
+        color="#ff9966"
       />
 
       <hemisphereLight
@@ -130,24 +126,14 @@ function Scene({ checkpoint }) {
         intensity={0.8}
       />
 
-      <directionalLight
-        position={[20, 30, 10]}
-        intensity={2}
-        color="#ffb37a"
-      />
-
       <Sky
         distance={450000}
         sunPosition={[10, 5, -20]}
         inclination={0.49}
         azimuth={0.25}
-        turbidity={6}
-        rayleigh={3}
-        mieCoefficient={0.005}
-        mieDirectionalG={0.8}
       />
 
-      {/* Massive River */}
+      {/* River */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -1, -200]}>
         <planeGeometry args={[200, 800]} />
         <meshStandardMaterial
@@ -163,10 +149,8 @@ function Scene({ checkpoint }) {
         <meshStandardMaterial color="#e8d8c3" />
       </mesh>
 
-      {/* Eiffel Placeholder */}
       <Eiffel />
 
-      {/* Cinematic depth of field effect */}
       <EffectComposer>
         <DepthOfField
           focusDistance={0.02}
@@ -183,6 +167,7 @@ function Scene({ checkpoint }) {
     </group>
   );
 }
+
 
 
 export default function App() {
@@ -446,15 +431,36 @@ export default function App() {
       ) : (
         <>
           <Canvas
-            camera={{ position: [0, 5, 20], fov: 70 }}
-            style={{ background: "#f7e7da" }}
-          >
-            <ScrollControls pages={8} damping={0.1}>
-              <Suspense fallback={null}>
-                <Scene checkpoint={checkpoint} />
-              </Suspense>
-            </ScrollControls>
-          </Canvas>
+  camera={{ position: [0, 40, -60], fov: 70 }}
+  style={{ background: "#f7e7da" }}
+>
+  <ScrollControls pages={8} damping={0.1}>
+    <Suspense fallback={null}>
+      <Scene checkpoint={checkpoint} />
+    </Suspense>
+
+   {checkpoint === 3 && (
+  <OrbitControls
+    target={[0, 30, -180]}   // center of Eiffel tower
+    enableZoom={true}
+    enablePan={false}
+    enableDamping
+    dampingFactor={0.05}
+    autoRotate
+    autoRotateSpeed={0.4}
+
+    // 🔥 Allow full vertical movement
+    minPolarAngle={0}              // look from top
+    maxPolarAngle={Math.PI - 0.1}  // almost fully under (but not fully)
+    
+    minDistance={20}
+    maxDistance={300}
+  />
+)}
+
+  </ScrollControls>
+</Canvas>
+
 
       <HeroUI />
 
